@@ -16,3 +16,14 @@ def retrieve_data():
     data.target.replace(map_dic, inplace=True)
     return data
 
+
+if __name__ == '__main__':
+    try:
+        data = retrieve_data()
+        if data.shape == (50000, 28):
+            print("Seems that's all works")
+        else:
+            print("Something went wrong with data")
+    except FileNotFoundError:
+        print('File seems to be unreachable at the moment')
+
