@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import variables as vr
 
@@ -10,11 +9,11 @@ def retrieve_data():
     pandas data frame with data object
     """
     col_names = [f'hist_{i}' for i in range(27)] + ['img_name', 'img_path', 'target']
-    data = pd.read_csv(vr.DATA_PATH, compression='gzip', sep=' ', header=None, names=col_names)
-    data = data.drop(columns=['img_name', 'img_path'])
+    collected_data = pd.read_csv(vr.DATA_PATH, compression='gzip', sep=' ', header=None, names=col_names)
+    collected_data.drop(columns=['img_name', 'img_path'], inplace=True)
     map_dic = {'Inlier': 0, 'Outlier': 1}
-    data.target.replace(map_dic, inplace=True)
-    return data
+    collected_data.target.replace(map_dic, inplace=True)
+    return collected_data
 
 
 if __name__ == '__main__':
