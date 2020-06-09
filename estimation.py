@@ -1,16 +1,16 @@
-import utilities as ut
-import matplotlib.pyplot as plt
+from hyperopt import hp, fmin, tpe, STATUS_OK
+from lightgbm import LGBMClassifier
 from sklearn import metrics
 from sklearn import model_selection
 from sklearn import pipeline
+from sklearn.cluster import DBSCAN
+from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsClassifier, LocalOutlierFactor
 from sklearn.svm import SVC, OneClassSVM
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import IsolationForest
-from sklearn.cluster import DBSCAN
-from lightgbm import LGBMClassifier
-from hyperopt import hp, fmin, tpe, Trials, STATUS_OK
+
+import utilities as ut
 
 
 class BasicEstimator:
@@ -105,8 +105,12 @@ class UnsupervisedEstimator(BasicEstimator):
         mi = metrics.mutual_info_score(self.labels, prediction)
         ami = metrics.adjusted_mutual_info_score(self.labels, prediction)
         nmi = metrics.normalized_mutual_info_score(self.labels, prediction)
-        calinski_harabasz = metrics.calinski_harabasz_score(self.features, prediction)
-        silhouette = metrics.silhouette_score(self.features, prediction)
+        try:
+            calinski_harabasz = metrics.calinski_harabasz_score(self.features, prediction)
+            silhouette = metrics.silhouette_score(self.features, prediction)
+        except ValueError:
+            calinski_harabasz = 0
+            silhouette = 0
         low_dim = ut.calculate_pca(self.features)
         ut.plot_low_dimensions(low_dim, prediction)
         return ari, mi, ami, nmi, calinski_harabasz, silhouette
@@ -128,7 +132,7 @@ class IsolationForestEstimator(UnsupervisedEstimator):
             }
             estimator = IsolationForest(n_jobs=-1, **params)
             prediction = estimator.fit_predict(self.features)
-            score = metrics.calinski_harabasz_score(self.features, prediction)
+            score = -metrics.calinski_harabasz_score(self.features, prediction)
             return {'loss': score, 'status': STATUS_OK}
 
         best_params = fmin(fn=objective, space=self.space, algo=tpe.suggest, max_evals=10)
@@ -148,7 +152,7 @@ class DBScanEstimator(UnsupervisedEstimator):
             params = {'eps': space['eps']}
             estimator = DBSCAN(n_jobs=-1, **params)
             prediction = estimator.fit_predict(self.features)
-            score = metrics.silhouette_score(self.features, prediction)
+            score = 1 - metrics.mutual_info_score(self.labels, prediction)
             return {'loss': score, 'status': STATUS_OK}
 
         best_params = fmin(fn=objective, space=self.space, algo=tpe.suggest, max_evals=5)
@@ -169,7 +173,7 @@ class OneClassSVMEstimator(UnsupervisedEstimator):
             params = {'nu': space['nu'], 'gamma': space['gamma']}
             estimator = OneClassSVM(cache_size=2048, kernel='rbf', **params)
             prediction = estimator.fit_predict(self.features)
-            score = metrics.calinski_harabasz_score(self.features, prediction)
+            score = -metrics.calinski_harabasz_score(self.features, prediction)
             return {'loss': score, 'status': STATUS_OK}
 
         best_params = fmin(fn=objective, space=self.space, algo=tpe.suggest, max_evals=5)
@@ -189,13 +193,15 @@ class LocalOutlierFactorEstimator(UnsupervisedEstimator):
     def get_best(self):
         def objective(space):
             params = {'n_neighbors': int(space['n_neighbors']),
-                      'leaf_size': int(space['gamma'])
+                      'leaf_size': int(space['leaf_size'])
                       }
             estimator = LocalOutlierFactor(n_jobs=-1, **params)
             prediction = estimator.fit_predict(self.features)
-            score = metrics.calinski_harabasz_score(self.features, prediction)
+            score = -metrics.calinski_harabasz_score(self.features, prediction)
             return {'loss': score, 'status': STATUS_OK}
 
         best_params = fmin(fn=objective, space=self.space, algo=tpe.suggest, max_evals=5)
+        best_params['n_neighbors'] = int(best_params['n_neighbors'])
+        best_params['leaf_size'] = int(best_params['leaf_size'])
         best_params['n_jobs'] = -1
         return best_params
