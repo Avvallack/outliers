@@ -77,6 +77,22 @@ def plot_low_dimensions(low_dim_data, labels):
     return sns.scatterplot(x='x', y='y', data=low_dim_df, hue=labels, palette='Set2')
 
 
+def plot_results(roc_curve, pr_curve):
+    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(16, 6))
+    ax[0].set_title("ROC Curve")
+    ax[0].plot([0, 1], [0, 1], linestyle="--", label="No Skill")
+    ax[0].plot(roc_curve[0], roc_curve[1], marker='.', label="ROC curve")
+    ax[0].set_xlabel("False Positive Rate")
+    ax[0].set_ylabel("True Positive Rate")
+    ax[0].legend()
+    ax[1].set_title("PR Curve")
+    ax[1].plot([0, 1], [1, 0], linestyle="--", label="No Skill")
+    ax[1].plot(pr_curve[1], pr_curve[0], marker=".", label="PR curve")
+    ax[1].set_xlabel("Recall")
+    ax[1].set_ylabel("Precision")
+    ax[1].legend()
+
+
 if __name__ == '__main__':
     try:
         data = retrieve_data()
