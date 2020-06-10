@@ -78,6 +78,12 @@ def plot_low_dimensions(low_dim_data, labels):
 
 
 def plot_results(roc_curve, pr_curve):
+    """
+    plot the supervised learning metrics of ROC curve and PR curve
+    :param roc_curve: list with 2 dimesions of data points
+    :param pr_curve: list with 2 dimensions of data points
+    :return:
+    """
     fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(16, 6))
     ax[0].set_title("ROC Curve")
     ax[0].plot([0, 1], [0, 1], linestyle="--", label="No Skill")

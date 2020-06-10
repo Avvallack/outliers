@@ -21,6 +21,10 @@ class BasicEstimator:
         self.estimator = None
 
     def basic_pipeline(self):
+        """
+        basic pipeline method could be used further to data transformation
+        :return: pipeline sci-kit learn object
+        """
         pipe = pipeline.Pipeline(steps=[("model_fitting", self.estimator)])
         return pipe
 
@@ -31,6 +35,10 @@ class SupervisedEstimator(BasicEstimator):
         self.grid = None
 
     def supervised_pipeline(self):
+        """
+        performs supervised estimations with calculating ROC AUC, PR AUC and F-measure
+        :return: roc_auc, pr_auc, f_measure floats
+        """
         train_features, test_features, train_labels, test_labels = model_selection.train_test_split(self.features,
                                                                                                     self.labels,
                                                                                                     test_size=0.2,
@@ -92,14 +100,19 @@ class UnsupervisedEstimator(BasicEstimator):
         BasicEstimator.__init__(self, features, labels)
         self.space = None
 
-    def get_best(self):
-        pass
+    def __get_best(self):
+        return {'params': 1}
 
     def basic_pipeline(self):
         return self.estimator
 
     def unsupervised_estimation(self):
-        best_estimator = self.estimator(**self.get_best())
+        """
+        performs unsupervised estimation with calculating metrics
+        :return: ari, mi, ami, nmi, calinski_harabasz, silhouette floats
+        """
+        best_params = self.__get_best()
+        best_estimator = self.estimator(**best_params)
         prediction = best_estimator.fit_predict(self.features)
         ari = metrics.adjusted_rand_score(self.labels, prediction)
         mi = metrics.mutual_info_score(self.labels, prediction)
@@ -124,7 +137,7 @@ class IsolationForestEstimator(UnsupervisedEstimator):
                       'max_features': hp.uniform('max_features', 0.7, 1.0),
                       }
 
-    def get_best(self):
+    def __get_best(self):
         def objective(space):
             params = {
                 'n_estimators': int(space['n_estimators']),
@@ -147,7 +160,7 @@ class DBScanEstimator(UnsupervisedEstimator):
         self.estimator = DBSCAN
         self.space = {'eps': hp.uniform('eps', 0.1, 0.8)}
 
-    def get_best(self):
+    def __get_best(self):
         def objective(space):
             params = {'eps': space['eps']}
             estimator = DBSCAN(n_jobs=-1, **params)
@@ -168,7 +181,7 @@ class OneClassSVMEstimator(UnsupervisedEstimator):
                       'gamma': hp.uniform('gamma', 0.01, 0.5)
                       }
 
-    def get_best(self):
+    def __get_best(self):
         def objective(space):
             params = {'nu': space['nu'], 'gamma': space['gamma']}
             estimator = OneClassSVM(cache_size=2048, kernel='rbf', **params)
@@ -190,7 +203,7 @@ class LocalOutlierFactorEstimator(UnsupervisedEstimator):
                       'leaf_size': hp.uniform('leaf_size', 30, 300)
                       }
 
-    def get_best(self):
+    def __get_best(self):
         def objective(space):
             params = {'n_neighbors': int(space['n_neighbors']),
                       'leaf_size': int(space['leaf_size'])
