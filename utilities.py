@@ -1,5 +1,5 @@
 import pandas as pd
-import variables as vr
+import constants as cns
 from scipy.stats import median_absolute_deviation as mad
 from sklearn.manifold import TSNE
 import seaborn as sns
@@ -14,7 +14,7 @@ def retrieve_data():
     :return: pandas data frame with data object
     """
     col_names = [f'hist_{i}' for i in range(27)] + ['img_name', 'img_path', 'target']
-    collected_data = pd.read_csv(vr.DATA_PATH, compression='gzip', sep=' ', header=None, names=col_names)
+    collected_data = pd.read_csv(cns.DATA_PATH, compression='gzip', sep=' ', header=None, names=col_names)
     collected_data.drop(columns=['img_name', 'img_path'], inplace=True)
     map_dic = {'Inlier': 0, 'Outlier': 1}
     collected_data.target.replace(map_dic, inplace=True)
